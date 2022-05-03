@@ -24,7 +24,7 @@ class LogisticRegression:
     def cost(self):
         m = self.y.size
         h = self.h_of_x()
-        return (1/m)*((-self.y).dot(np.log(h)) - (1-self.y).dot(np.log(1-h)))
+        return (1/m)*((-self.y).dot(np.log(h+.0000001)) - (1-self.y).dot(np.log(1-h+.0000001)))
 
     def gradient_descent(self, alpha, iters):
         m = self.y.size

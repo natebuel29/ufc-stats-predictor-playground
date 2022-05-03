@@ -35,24 +35,24 @@ class TestLogisticRegression(unittest.TestCase):
         self.assertEqual(np.around(results, decimals=4), expected)
 
     def test_gradient_descent(self):
-        irisdata = np.loadtxt(
-            "C:\\Users\\nateb\\Documents\\Repos\\python\\ufc-stats-predictor-playground\\tests\\irisdata.csv", delimiter=",", skiprows=1).astype("float")
-        rows, columns = irisdata.shape
+        testdata = np.loadtxt(
+            "C:\\Users\\nateb\\Documents\\Repos\\python\\ufc-stats-predictor-playground\\tests\\testdata.csv", delimiter=",").astype("float")
+        rows, columns = testdata.shape
         theta = np.array([0, 0, 0])
-        y = irisdata[:, columns-1]
+        y = testdata[:, columns-1]
         X = np.concatenate([np.ones((rows, 1)),
-                            irisdata[:, 0:columns-1]], axis=1)
+                            testdata[:, 0:columns-1]], axis=1)
         logReg = LogisticRegression(X, y, theta)
-        iteratations = 30000
+        iteratations = 500000
         j_history = logReg.gradient_descent(0.01, iteratations)
         res = minimize(
             costFunction,  np.array([0, 0, 0]), (X, y), jac=True, method='TNC', options={'maxiter': 400})
         print(res.x)
         print(res.fun)
         # print(res.x)
-        # plotChart(iteratations, j_history)
+        plotChart(iteratations, j_history)
 
-        # (logReg.theta)
+        print(logReg.theta)
 
 
 def costFunction(theta, X, y):
