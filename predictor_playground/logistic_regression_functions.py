@@ -3,9 +3,12 @@ from scipy.optimize import minimize
 import matplotlib.pyplot as plt
 
 
+def sigmoid(h):
+    return (1.0/(1.0+np.exp(-h)))
+
+
 def costFunction(theta, X, y):
-    def sigmoid(h):
-        return (1.0/(1.0+np.exp(-h)))
+
     m = y.size
     h = sigmoid(X.dot(np.transpose(theta)))
     J = (1/m)*((-y).dot(np.log(h)) - (1-y).dot(np.log(1-h)))
@@ -22,6 +25,12 @@ def plotChart(iterations, cost_num):
     ax.set_title('Error vs Iterations')
     plt.style.use('fivethirtyeight')
     plt.show()
+
+
+def predict(theta, x):
+    pred = sigmoid(x.dot(theta))
+    print(pred)
+    return 1 if pred > 0.5 else 0
 
 
 def standardize(X):

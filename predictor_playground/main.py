@@ -72,20 +72,28 @@ def main():
     X = fight_df.loc[:, "rwins":].astype(float).to_numpy()
     X_norm = standardize(X)
     rows, columns = X.shape
-    y = fight_df.loc[:, "winner"].astype(float).to_numpy()
+    y = fight_df.loc[1:, "winner"].astype(float).to_numpy()
     X = np.concatenate([np.ones((rows, 1)),
                         X], axis=1)
     X_norm = np.concatenate([np.ones((rows, 1)),
                              X_norm], axis=1)
+    test = X_norm[0, :]
+    print(X)
+    print(X_norm)
+    X_norm = X_norm[1:, :]
+    print(X_norm)
+    print(test)
     start_theta = np.zeros(columns+1)
     testLogReg = LogisticRegression(X_norm, y, start_theta)
     iters = 40000
     j_history = testLogReg.gradient_descent(0.01, iters)
     res = minimize(costFunction, start_theta, (X_norm, y),
                    jac=True, method="BFGS", options={'maxiter': 400})
+
     print(res.x)
     print(testLogReg.theta)
     print("GRADIENT DESCENT AND MINIMIZE PRODUCE THE SAME THETA :)")
+    print(predict(res.x, test))
 
 
 if __name__ == "__main__":
