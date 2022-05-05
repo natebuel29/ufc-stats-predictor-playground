@@ -1,3 +1,4 @@
+from doctest import TestResults
 import random
 import pandas as pd
 import csv
@@ -69,31 +70,29 @@ def main():
 
     # construct a non-randomized dataframe
     fight_df = construct_fight_dataframe(fights_df, fighter_stats, False)
-    X = fight_df.loc[:, "rwins":].astype(float).to_numpy()
+
+    # lets do a simple 80-20 train-test data split for now but implement cross validation
+    # later. I would like to predict the ufc 274 card
+    train = fight_df.sample(
+        frac=0.8, random_state=200)
+    test = fights_df.drop(train.index)
+    print(train)
+    print(test)
+
+    X = train.loc[:, "rwins":].astype(float).to_numpy()
     X_norm = standardize(X)
     rows, columns = X.shape
-    y = fight_df.loc[1:, "winner"].astype(float).to_numpy()
+    y = train.loc[:, "winner"].astype(float).to_numpy()
     X = np.concatenate([np.ones((rows, 1)),
                         X], axis=1)
     X_norm = np.concatenate([np.ones((rows, 1)),
                              X_norm], axis=1)
-    test = X_norm[0, :]
-    print(X)
-    print(X_norm)
-    X_norm = X_norm[1:, :]
-    print(X_norm)
-    print(test)
     start_theta = np.zeros(columns+1)
-    testLogReg = LogisticRegression(X_norm, y, start_theta)
-    iters = 40000
-    j_history = testLogReg.gradient_descent(0.01, iters)
+
+    # use the scipy.optimize.minimize function to train our parameters
+    # compared the generated weights and they matched my gradient descent function (:
     res = minimize(costFunction, start_theta, (X_norm, y),
                    jac=True, method="BFGS", options={'maxiter': 400})
-
-    print(res.x)
-    print(testLogReg.theta)
-    print("GRADIENT DESCENT AND MINIMIZE PRODUCE THE SAME THETA :)")
-    print(predict(res.x, test))
 
 
 if __name__ == "__main__":

@@ -29,7 +29,9 @@ def plotChart(iterations, cost_num):
 
 def predict(theta, x):
     pred = sigmoid(x.dot(theta))
-    print(pred)
+
+    # if pred > 0.5 -> predict red fighter won (1)
+    # if pred < 0.5 -> predict blue fighter won (2)
     return 1 if pred > 0.5 else 0
 
 
