@@ -1,5 +1,5 @@
-from doctest import TestResults
 import random
+import sys
 import pandas as pd
 import csv
 import numpy as np
@@ -69,15 +69,19 @@ def main():
     fights_df = pd.read_csv('data\\fights.csv')
 
     # construct a non-randomized dataframe
-    fight_df = construct_fight_dataframe(fights_df, fighter_stats, False)
+    fights_df = construct_fight_dataframe(fights_df, fighter_stats, False)
 
     # lets do a simple 80-20 train-test data split for now but implement cross validation
     # later. I would like to predict the ufc 274 card
-    train = fight_df.sample(
-        frac=0.8, random_state=200)
+    train = fights_df.sample(
+        frac=0.8, random_state=250)
     test = fights_df.drop(train.index)
-    print(train)
-    print(test)
+
+    test_X = test.loc[:, "rwins":].astype(float).to_numpy()
+    test_X = standardize(test_X)
+    test_X = np.concatenate([np.ones((test_X.shape[0], 1)),
+                             test_X], axis=1)
+    test_y = test.loc[:, "winner"].astype(float).to_numpy()
 
     X = train.loc[:, "rwins":].astype(float).to_numpy()
     X_norm = standardize(X)
@@ -93,6 +97,19 @@ def main():
     # compared the generated weights and they matched my gradient descent function (:
     res = minimize(costFunction, start_theta, (X_norm, y),
                    jac=True, method="BFGS", options={'maxiter': 400})
+
+    correct = 0
+    total = test_y.size
+    guesses = []
+    print(total)
+    for i in range(0, total):
+        x = test_X[i]
+        result = predict(res.x, x)
+        guesses.append(result)
+        if result == test_y[i]:
+            correct += 1
+
+    print(f"test results are {correct/total}")
 
 
 if __name__ == "__main__":
