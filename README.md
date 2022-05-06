@@ -1,7 +1,7 @@
 # UFC 274 Predictions 3 models
 
 ## Randomized data
-
+```
 test results are 0.7110766847405112
 The predicted winner of Charles Oliveira vs Justin Gaethje is: Justin Gaethje
 The predicted winner of Tony Ferguson vs Michael Chandler is: Tony Ferguson
@@ -49,3 +49,4 @@ The predicted winner of Tracy Cortez vs Melissa Gatto is: Tracy Cortez
 The predicted winner of Kleydson Rodrigues vs CJ Vergara is: Kleydson Rodrigues
 The predicted winner of Journey Newson vs Fernie Garcia is: Fernie Garcia
 The predicted winner of Ariane Carnelossi vs Loopy Godinez is: Ariane Carneloss
+```
