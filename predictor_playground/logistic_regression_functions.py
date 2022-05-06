@@ -8,7 +8,6 @@ def sigmoid(h):
 
 
 def costFunction(theta, X, y):
-
     m = y.size
     h = sigmoid(X.dot(np.transpose(theta)))
     J = (1/m)*((-y).dot(np.log(h)) - (1-y).dot(np.log(1-h)))
