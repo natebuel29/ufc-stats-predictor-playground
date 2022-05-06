@@ -1,3 +1,4 @@
+from distutils.util import rfc822_escape
 import random
 import sys
 import pandas as pd
@@ -68,8 +69,17 @@ def main():
     # read from the scraper generated csv files
     fights_df = pd.read_csv('data\\fights.csv')
 
+    future_df = pd.read_csv('data\\future_fights.csv')
+    # only grab fights for May 7th card
+    future_df = construct_fight_dataframe(
+        future_df.loc[future_df["date"] == "May 07, 2022"], fighter_stats, False)
+
+    future_X = future_df.loc[:, "rwins":].astype(float).to_numpy()
+    future_X = standardize(future_X)
+    future_X = np.concatenate([np.ones((future_X.shape[0], 1)),
+                               future_X], axis=1)
     # construct a non-randomized dataframe
-    fights_df = construct_fight_dataframe(fights_df, fighter_stats, False)
+    fights_df = construct_fight_dataframe(fights_df, fighter_stats, True)
 
     # lets do a simple 80-20 train-test data split for now but implement cross validation
     # later. I would like to predict the ufc 274 card
@@ -110,6 +120,16 @@ def main():
             correct += 1
 
     print(f"test results are {correct/total}")
+
+    for i in range(0, future_X.shape[0]):
+        x = future_X[i]
+        fight_details = future_df.loc[i, :]
+        rf = fight_details['rf']
+        bf = fight_details['bf']
+        result = predict(res.x, x)
+        winner = rf if result == 1 else bf
+
+        print(f"The predicted winner of {rf} vs {bf} is: {winner}")
 
 
 if __name__ == "__main__":
