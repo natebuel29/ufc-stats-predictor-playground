@@ -1,4 +1,4 @@
-# UFC 274 Predictions 3 models
+# UFC 274 Predictions 
 
 ## Randomized data
 ```
