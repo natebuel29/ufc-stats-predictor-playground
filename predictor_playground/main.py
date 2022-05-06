@@ -5,8 +5,9 @@ import pandas as pd
 import csv
 import numpy as np
 from logistic_regression_functions import *
-from logistic_regression import LogisticRegression
 from scipy.optimize import minimize
+from sklearn.linear_model import LogisticRegression
+
 x_labels = ['rf', 'bf', 'winner', 'rwins', 'bwins', 'rloses', 'bloses', 'rslpm', 'bslpm', 'rstrac', 'bstrac', 'rsapm', 'bsapm', 'rstrd', 'bstrd', 'rtdav',
             'btdav', 'rtdac', 'btdac', 'rtdd', 'btdd', 'rsubav', 'bsubav']
 stat_indexes = [4, 5, 13, 14, 15, 16, 17, 18, 19, 20]
@@ -79,7 +80,7 @@ def main():
     future_X = np.concatenate([np.ones((future_X.shape[0], 1)),
                                future_X], axis=1)
     # construct a non-randomized dataframe
-    fights_df = construct_fight_dataframe(fights_df, fighter_stats, True)
+    fights_df = construct_fight_dataframe(fights_df, fighter_stats, False)
 
     # lets do a simple 80-20 train-test data split for now but implement cross validation
     # later. I would like to predict the ufc 274 card
@@ -120,6 +121,7 @@ def main():
             correct += 1
 
     print(f"test results are {correct/total}")
+    clf = LogisticRegression(random_state=0).fit(X_norm, y)
 
     for i in range(0, future_X.shape[0]):
         x = future_X[i]
@@ -128,8 +130,10 @@ def main():
         bf = fight_details['bf']
         result = predict(res.x, x)
         winner = rf if result == 1 else bf
-
         print(f"The predicted winner of {rf} vs {bf} is: {winner}")
+
+    predictions = clf.predict(future_X)
+    print(predictions)
 
 
 if __name__ == "__main__":

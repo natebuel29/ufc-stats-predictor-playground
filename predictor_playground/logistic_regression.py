@@ -3,6 +3,8 @@ from sklearn.preprocessing import normalize
 
 
 class LogisticRegression:
+    # should we add the bias variable?
+    # https://towardsdatascience.com/logistic-regression-from-scratch-in-python-ec66603592e2
     def __init__(self, X, y, theta):
         self.X = X
         self.y = y
