@@ -7,6 +7,7 @@ import numpy as np
 from logistic_regression_functions import *
 from scipy.optimize import minimize
 from sklearn.linear_model import LogisticRegression
+from sklearn import svm, neighbors, tree
 
 x_labels = ['rf', 'bf', 'winner', 'rwins', 'bwins', 'rloses', 'bloses', 'rslpm', 'bslpm', 'rstrac', 'bstrac', 'rsapm', 'bsapm', 'rstrd', 'bstrd', 'rtdav',
             'btdav', 'rtdac', 'btdac', 'rtdd', 'btdd', 'rsubav', 'bsubav']
@@ -61,6 +62,8 @@ def construct_fight_dataframe(df, fighter_stats, shouldRandomize):
 
 
 def main():
+
+    # lets figure out how to compute confidence scores
     fighter_stats = {}
 
     with open('data\\fighters.csv', mode='r') as inp:
@@ -94,10 +97,12 @@ def main():
                              test_X], axis=1)
     test_y = test.loc[:, "winner"].astype(float).to_numpy()
 
-    X = train.loc[:, "rwins":].astype(float).to_numpy()
+    #X = train.loc[:, "rwins":].astype(float).to_numpy()
+    X = fights_df.loc[:, "rwins":].astype(float).to_numpy()
     X_norm = standardize(X)
     rows, columns = X.shape
-    y = train.loc[:, "winner"].astype(float).to_numpy()
+    #y = train.loc[:, "winner"].astype(float).to_numpy()
+    y = fights_df.loc[:, "winner"].astype(float).to_numpy()
     X = np.concatenate([np.ones((rows, 1)),
                         X], axis=1)
     X_norm = np.concatenate([np.ones((rows, 1)),
@@ -112,28 +117,62 @@ def main():
     correct = 0
     total = test_y.size
     guesses = []
-    print(total)
     for i in range(0, total):
         x = test_X[i]
         result = predict(res.x, x)
         guesses.append(result)
         if result == test_y[i]:
             correct += 1
+    print("------------Logistic Regression---------------")
+    print(f"test results for  {correct/total}")
+    clf = LogisticRegression(random_state=2).fit(X_norm, y)
+    lg_results = predict_X(res.x, future_X)
+    print(lg_results)
+    display_predictions(lg_results, future_df)
+    # for i in range(0, future_X.shape[0]):
+    #     x = future_X[i]
+    #     fight_details = future_df.loc[i, :]
+    #     rf = fight_details['rf']
+    #     bf = fight_details['bf']
+    #     result = predict(res.x, x)
+    #     winner = rf if result == 1 else bf
+    #     print(f"The predicted winner of {rf} vs {bf} is: {winner}")
 
-    print(f"test results are {correct/total}")
-    clf = LogisticRegression(random_state=0).fit(X_norm, y)
+    clf_predictions = clf.predict(future_X)
+    print(clf.predict(future_X))
+    print(clf.score(X_norm, y))
+    display_predictions(clf_predictions, future_df)
 
-    for i in range(0, future_X.shape[0]):
-        x = future_X[i]
-        fight_details = future_df.loc[i, :]
+    print("------------SVM---------------")
+    svm_clf = svm.SVC().fit(X_norm, y)
+    svm_results = svm_clf.predict(future_X)
+    print(svm_clf.predict(future_X))
+    print(svm_clf.score(X_norm, y))
+    display_predictions(svm_results, future_df)
+
+    print("------------Decision Tree---------------")
+    tree_clf = tree.DecisionTreeClassifier().fit(X_norm, y)
+    tree_results = tree_clf.predict(future_X)
+    print(tree_clf.predict(future_X))
+    print(tree_clf.score(X_norm, y))
+    display_predictions(tree_results, future_df)
+
+    print("------------K nearest neighbors---------------")
+    kn_clf = neighbors.KNeighborsClassifier(n_neighbors=3).fit(X_norm, y)
+    kn_results = kn_clf.predict(future_X)
+    print(kn_clf.predict(future_X))
+    print(kn_clf.score(X_norm, y))
+    display_predictions(kn_results, future_df)
+
+
+def display_predictions(results, df):
+    for i in range(0, len(results)):
+        result = results[i]
+        fight_details = df.loc[i, :]
         rf = fight_details['rf']
         bf = fight_details['bf']
-        result = predict(res.x, x)
         winner = rf if result == 1 else bf
         print(f"The predicted winner of {rf} vs {bf} is: {winner}")
-
-    predictions = clf.predict(future_X)
-    print(predictions)
 
 
 if __name__ == "__main__":

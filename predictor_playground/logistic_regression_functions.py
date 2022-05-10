@@ -34,6 +34,15 @@ def predict(theta, x):
     return 1 if pred > 0.5 else 0
 
 
+def predict_X(theta, X):
+    results = []
+    for i in range(0, X.shape[0]):
+        x = X[i]
+        result = predict(theta, x)
+        results.append(result)
+    return results
+
+
 def standardize(X):
     X_norm = X.copy()
     mu = np.mean(X_norm, axis=0)
