@@ -8,8 +8,13 @@ from logistic_regression_functions import *
 from scipy.optimize import minimize
 from sklearn.linear_model import LogisticRegression
 from sklearn import svm, neighbors, tree
+from sklearn.feature_selection import RFE
+np.set_printoptions(threshold=sys.maxsize)
 
-x_labels = ['rf', 'bf', 'winner', 'rwins', 'bwins', 'rloses', 'bloses', 'rslpm', 'bslpm', 'rstrac', 'bstrac', 'rsapm', 'bsapm', 'rstrd', 'bstrd', 'rtdav',
+
+fdf_labels = ['rf', 'bf', 'winner', 'rwins', 'bwins', 'rloses', 'bloses', 'rslpm', 'bslpm', 'rstrac', 'bstrac', 'rsapm', 'bsapm', 'rstrd', 'bstrd', 'rtdav',
+              'btdav', 'rtdac', 'btdac', 'rtdd', 'btdd', 'rsubav', 'bsubav']
+x_labels = ['rwins', 'bwins', 'rloses', 'bloses', 'rslpm', 'bslpm', 'rstrac', 'bstrac', 'rsapm', 'bsapm', 'rstrd', 'bstrd', 'rtdav',
             'btdav', 'rtdac', 'btdac', 'rtdd', 'btdd', 'rsubav', 'bsubav']
 stat_indexes = [4, 5, 13, 14, 15, 16, 17, 18, 19, 20]
 
@@ -23,7 +28,7 @@ def construct_fight_dataframe(df, fighter_stats, shouldRandomize):
     Returns:
         The fight dataframe which includes the fighters,their stats, and the winner
     """
-    X = pd.DataFrame(columns=x_labels)
+    X = pd.DataFrame(columns=fdf_labels)
     for row in df.itertuples():
         temp_ar = []
         rwin = row[3]
@@ -56,13 +61,12 @@ def construct_fight_dataframe(df, fighter_stats, shouldRandomize):
                 temp_ar.append(bstat)
 
             X = pd.concat(
-                [pd.DataFrame([temp_ar], columns=x_labels), X], ignore_index=True)
+                [pd.DataFrame([temp_ar], columns=fdf_labels), X], ignore_index=True)
 
     return X
 
 
 def main():
-
     # lets figure out how to compute confidence scores
     fighter_stats = {}
 
@@ -80,10 +84,9 @@ def main():
 
     future_X = future_df.loc[:, "rwins":].astype(float).to_numpy()
     future_X = standardize(future_X)
-    future_X = np.concatenate([np.ones((future_X.shape[0], 1)),
-                               future_X], axis=1)
+
     # construct a non-randomized dataframe
-    fights_df = construct_fight_dataframe(fights_df, fighter_stats, False)
+    fights_df = construct_fight_dataframe(fights_df, fighter_stats, True)
 
     # lets do a simple 80-20 train-test data split for now but implement cross validation
     # later. I would like to predict the ufc 274 card
@@ -96,48 +99,41 @@ def main():
     test_X = np.concatenate([np.ones((test_X.shape[0], 1)),
                              test_X], axis=1)
     test_y = test.loc[:, "winner"].astype(float).to_numpy()
+    y = train.loc[:, "winner"].astype(float).to_numpy()
 
-    #X = train.loc[:, "rwins":].astype(float).to_numpy()
-    X = fights_df.loc[:, "rwins":].astype(float).to_numpy()
+    X = train.loc[:, "rwins":].astype(float).to_numpy()
     X_norm = standardize(X)
-    rows, columns = X.shape
-    #y = train.loc[:, "winner"].astype(float).to_numpy()
-    y = fights_df.loc[:, "winner"].astype(float).to_numpy()
-    X = np.concatenate([np.ones((rows, 1)),
-                        X], axis=1)
+    clf = LogisticRegression(random_state=2)
+    # Use Recursive Feature Elimation for feature selection
+    rfe = RFE(clf)
+    fit = rfe.fit(X_norm, y)
+    # print(X_norm)
+    print("Num Features: %d" % fit.n_features_)
+    print("Selected Features: %s" % fit.support_)
+    print("Feature Ranking: %s" % fit.ranking_)
+    # print(X_norm)
+    X_norm = X_norm[:, fit.support_]
+
+    rows, columns = X_norm.shape
     X_norm = np.concatenate([np.ones((rows, 1)),
                              X_norm], axis=1)
+    future_X = future_X[:, fit.support_]
+    future_X = np.concatenate([np.ones((future_X.shape[0], 1)),
+                               future_X], axis=1)
+
     start_theta = np.zeros(columns+1)
+
+    print("------------Logistic Regression---------------")
+    #print(f"test results for  {correct/total}")
 
     # use the scipy.optimize.minimize function to train our parameters
     # compared the generated weights and they matched my gradient descent function (:
     res = minimize(costFunction, start_theta, (X_norm, y),
                    jac=True, method="BFGS", options={'maxiter': 400})
-
-    correct = 0
-    total = test_y.size
-    guesses = []
-    for i in range(0, total):
-        x = test_X[i]
-        result = predict(res.x, x)
-        guesses.append(result)
-        if result == test_y[i]:
-            correct += 1
-    print("------------Logistic Regression---------------")
-    print(f"test results for  {correct/total}")
-    clf = LogisticRegression(random_state=2).fit(X_norm, y)
     lg_results = predict_X(res.x, future_X)
     print(lg_results)
     display_predictions(lg_results, future_df)
-    # for i in range(0, future_X.shape[0]):
-    #     x = future_X[i]
-    #     fight_details = future_df.loc[i, :]
-    #     rf = fight_details['rf']
-    #     bf = fight_details['bf']
-    #     result = predict(res.x, x)
-    #     winner = rf if result == 1 else bf
-    #     print(f"The predicted winner of {rf} vs {bf} is: {winner}")
-
+    clf.fit(X_norm, y)
     clf_predictions = clf.predict(future_X)
     print(clf.predict(future_X))
     print(clf.score(X_norm, y))
