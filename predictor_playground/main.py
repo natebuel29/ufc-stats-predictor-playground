@@ -80,7 +80,7 @@ def main():
     future_df = pd.read_csv('data\\future_fights.csv')
     # only grab fights for May 7th card
     future_df = construct_fight_dataframe(
-        future_df.loc[future_df["date"] == "May 07, 2022"], fighter_stats, False)
+        future_df.loc[future_df["date"] == "May 14, 2022"], fighter_stats, False)
 
     future_X = future_df.loc[:, "rwins":].astype(float).to_numpy()
     future_X = standardize(future_X)
