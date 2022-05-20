@@ -7,8 +7,11 @@ results for 5/14 fight night:
 [1, 0, 1, 1, 0, 0, 1, 1, 1, 1, 1]
 
 The predicted winner of Jan Blachowicz vs Aleksandar Rakic is: Jan Blachowicz
+
 The predicted winner of Katlyn Chookagian vs Amanda Ribas is: Amanda Ribas
+
 The predicted winner of Davey Grant vs Louis Smolka is: Davey Grant
+
 The predicted winner of Ryan Spann vs Ion Cutelaba is: Ryan Spann
 The predicted winner of Frank Camacho vs Manuel Torres is: Manuel Torres
 The predicted winner of Jake Hadley vs Allan Nascimento is: Allan Nascimento
