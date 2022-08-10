@@ -4,11 +4,12 @@ import sys
 import pandas as pd
 import csv
 import numpy as np
-from logistic_regression_functions import *
+from logistic_regression.logistic_regression_functions import *
 from scipy.optimize import minimize
 from sklearn.linear_model import LogisticRegression
 from sklearn import svm, neighbors, tree
 from sklearn.feature_selection import RFE
+from support_vector import svm_pegasos
 np.set_printoptions(threshold=sys.maxsize)
 
 
@@ -96,8 +97,7 @@ def main():
 
     test_X = test.loc[:, "rwins":].astype(float).to_numpy()
     test_X = standardize(test_X)
-    test_X = np.concatenate([np.ones((test_X.shape[0], 1)),
-                             test_X], axis=1)
+
     test_y = test.loc[:, "winner"].astype(float).to_numpy()
     y = train.loc[:, "winner"].astype(float).to_numpy()
 
@@ -113,6 +113,7 @@ def main():
     print("Feature Ranking: %s" % fit.ranking_)
     # print(X_norm)
     X_norm = X_norm[:, fit.support_]
+    test_X = test_X[:, fit.support_]
 
     rows, columns = X_norm.shape
     X_norm = np.concatenate([np.ones((rows, 1)),
@@ -120,6 +121,8 @@ def main():
     future_X = future_X[:, fit.support_]
     future_X = np.concatenate([np.ones((future_X.shape[0], 1)),
                                future_X], axis=1)
+    test_X = np.concatenate([np.ones((test_X.shape[0], 1)),
+                             test_X], axis=1)
 
     start_theta = np.zeros(columns+1)
 
@@ -140,25 +143,35 @@ def main():
     display_predictions(clf_predictions, future_df)
 
     print("------------SVM---------------")
-    svm_clf = svm.SVC().fit(X_norm, y)
-    svm_results = svm_clf.predict(future_X)
+    svm_clf = svm.SVC(C=1).fit(X_norm, y)
+    svm_results = svm_clf.predict(test_X)
     print(svm_clf.predict(future_X))
-    print(svm_clf.score(X_norm, y))
-    display_predictions(svm_results, future_df)
+    print(svm_clf.score(test_X, test_y))
+    #display_predictions(svm_results, future_df)
+    print(svm_clf.n_support_)
+    print("------------Custom SVM---------------")
+    zero_index = y == 0
+    svm_y = y
+    svm_y[zero_index] = -1
+    custom_svm = svm_pegasos.SVM().fit(X_norm, svm_y)
+    custom_svm_results = custom_svm.predict_X(future_X)
+    print(custom_svm_results)
+    display_predictions(custom_svm_results, future_df)
+    print(custom_svm.positive_support)
+    print(custom_svm.negative_support)
+    # print("------------Decision Tree---------------")
+    # tree_clf = tree.DecisionTreeClassifier().fit(X_norm, y)
+    # tree_results = tree_clf.predict(future_X)
+    # print(tree_clf.predict(future_X))
+    # print(tree_clf.score(X_norm, y))
+    # display_predictions(tree_results, future_df)
 
-    print("------------Decision Tree---------------")
-    tree_clf = tree.DecisionTreeClassifier().fit(X_norm, y)
-    tree_results = tree_clf.predict(future_X)
-    print(tree_clf.predict(future_X))
-    print(tree_clf.score(X_norm, y))
-    display_predictions(tree_results, future_df)
-
-    print("------------K nearest neighbors---------------")
-    kn_clf = neighbors.KNeighborsClassifier(n_neighbors=3).fit(X_norm, y)
-    kn_results = kn_clf.predict(future_X)
-    print(kn_clf.predict(future_X))
-    print(kn_clf.score(X_norm, y))
-    display_predictions(kn_results, future_df)
+    # print("------------K nearest neighbors---------------")
+    # kn_clf = neighbors.KNeighborsClassifier(n_neighbors=3).fit(X_norm, y)
+    # kn_results = kn_clf.predict(future_X)
+    # print(kn_clf.predict(future_X))
+    # print(kn_clf.score(X_norm, y))
+    # display_predictions(kn_results, future_df)
 
 
 def display_predictions(results, df):
