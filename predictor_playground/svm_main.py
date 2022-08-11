@@ -16,11 +16,8 @@
 from util import construct_data
 from support_vector import svm_pegasos
 from sklearn.datasets import make_blobs
-from sklearn.feature_selection import RFE
 
 import matplotlib.pyplot as plt
-import time
-import random
 import pandas as pd
 import numpy as np
 from sklearn import svm
