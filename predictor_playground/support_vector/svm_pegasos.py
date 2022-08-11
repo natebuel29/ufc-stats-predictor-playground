@@ -9,7 +9,8 @@ import random
 
 class SVM:
 
-    def fit(self, X, y, max_iter=1000000, lambda_=.001):
+    # This fitting will not work with non-linear models
+    def fit(self, X, y, max_iter=4000000, lambda_=.001):
         self.w = np.zeros(X.shape[1])
         self.positive_support = 0
         self.negative_support = 0
@@ -25,7 +26,6 @@ class SVM:
             # correct classification
             else:
                 self.w = (1-n*lambda_)*self.w
-
             if round(pred, 3) == 1:
                 self.positive_support += 1
             elif round(pred, 3) == -1:

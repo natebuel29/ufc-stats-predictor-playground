@@ -9,7 +9,9 @@ from scipy.optimize import minimize
 from sklearn.linear_model import LogisticRegression
 from sklearn import svm, neighbors, tree
 from sklearn.feature_selection import RFE
+import matplotlib.pyplot as plt
 from support_vector import svm_pegasos
+
 np.set_printoptions(threshold=sys.maxsize)
 
 
