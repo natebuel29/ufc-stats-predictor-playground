@@ -2,6 +2,9 @@ import random
 import pandas as pd
 import csv
 import numpy as np
+import boto3
+import json
+import mysql.connector
 
 from logistic_regression.logistic_regression_functions import *
 
@@ -60,26 +63,37 @@ def construct_fight_dataframe(df, fighter_stats, shouldRandomize):
 
 
 def construct_data():
-    # lets figure out how to compute confidence scores
-    fighter_stats = {}
+   # Create a Secrets Manager client
+    session = boto3.session.Session()
+    client = session.client(
+        service_name='secretsmanager',
+        region_name='us-east-1'
+    )
+    secretMap = client.get_secret_value(
+        SecretId="UfcPredictorRdsSecret-extTBzicS2ON", VersionStage="AWSCURRENT")
+    rdsSecret = json.loads(secretMap.get("SecretString"))
 
-    with open('data\\fighters.csv', mode='r') as inp:
-        reader = csv.reader(inp)
-        fighter_stats = {rows[0]: rows[0:] for rows in reader}
+    host = rdsSecret.get("host")
+    user = rdsSecret.get("username")
+    password = rdsSecret.get("password")
+    database = rdsSecret.get("dbname")
+    conn = mysql.connector.connect(
+        host=host,
+        user=user,
+        password=password,
+        database=database,
+    )
 
-    # read from the scraper generated csv files
-    fights_df = pd.read_csv('data\\fights.csv')
+    cursor = conn.cursor()
+    cursor.execute(f"SELECT * FROM past_matchups")
+    fights_df = pd.DataFrame(cursor.fetchall()).loc[:, 1:]
 
-    future_df = pd.read_csv('data\\future_fights.csv')
-    # only grab fights for May 7th card
-    future_df = construct_fight_dataframe(
-        future_df.loc[future_df["date"] == "May 14, 2022"], fighter_stats, False)
+    cursor.execute(f"SELECT * FROM future_matchups WHERE date_='2022-08-13'")
 
-    X_future = future_df.loc[:, "rwins":].astype(float).to_numpy()
+    future_df = pd.DataFrame(cursor.fetchall()).loc[:, 2:]
+
+    X_future = future_df.loc[:, 5:].astype(float).to_numpy()
     X_future = standardize(X_future)
-
-    # construct a non-randomized dataframe
-    fights_df = construct_fight_dataframe(fights_df, fighter_stats, True)
 
     # lets do a simple 80-20 train-test data split for now but implement cross validation
     # later. I would like to predict the ufc 274 card
@@ -87,13 +101,13 @@ def construct_data():
         frac=0.8, random_state=250)
     test = fights_df.drop(train.index)
 
-    X_test = test.loc[:, "rwins":].astype(float).to_numpy()
+    X_test = test.loc[:, 4:].astype(float).to_numpy()
     X_test = standardize(X_test)
 
-    y_test = test.loc[:, "winner"].astype(float).to_numpy()
-    y = train.loc[:, "winner"].astype(float).to_numpy()
+    y_test = test.loc[:, 3].astype(float).to_numpy()
+    y = train.loc[:, 3].astype(float).to_numpy()
 
-    X = train.loc[:, "rwins":].astype(float).to_numpy()
+    X = train.loc[:, 4:].astype(float).to_numpy()
     X = standardize(X)
 
     return X, y, X_test, y_test, X_future

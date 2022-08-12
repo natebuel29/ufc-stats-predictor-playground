@@ -1,22 +1,7 @@
-# clf = LogisticRegression(random_state=2)
-#     # Use Recursive Feature Elimation for feature selection
-#     rfe = RFE(clf)
-#     fit = rfe.fit(X_norm, y)
-#     X_norm = X_norm[:, fit.support_]
-#     test_X = test_X[:, fit.support_]
-
-#     rows, columns = X_norm.shape
-#     X_norm = np.concatenate([np.ones((rows, 1)),
-#                              X_norm], axis=1)
-#     future_X = future_X[:, fit.support_]
-#     future_X = np.concatenate([np.ones((future_X.shape[0], 1)),
-#                                future_X], axis=1)
-#     test_X = np.concatenate([np.ones((test_X.shape[0], 1)),
-#                              test_X], axis=1)
 from util import construct_data
 from support_vector import svm_pegasos
 from sklearn.datasets import make_blobs
-
+from sklearn.model_selection import GridSearchCV
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
@@ -104,7 +89,7 @@ def svm_ufc_test():
                              X_test], axis=1)
 
     print("------------SVM---------------")
-    svm_clf = svm.SVC(C=1).fit(X, y)
+    svm_clf = svm.SVC(C=5, gamma=0.01).fit(X, y)
     print("Score on test data")
     print(svm_clf.score(X_test, y_test))
     print("predictions for a future fight card")
@@ -122,10 +107,58 @@ def svm_ufc_test():
     print(custom_svm.positive_support)
     print(custom_svm.negative_support)
 
+# Custom method to determine kernel and c parameters
+
+
+def svm_parameter_cross_val():
+    X, y, X_test, y_test, X_future = construct_data()
+    rows, columns = X.shape
+    X = np.concatenate([np.ones((rows, 1)),
+                        X], axis=1)
+    X_future = np.concatenate([np.ones((X_future.shape[0], 1)),
+                               X_future], axis=1)
+    X_test = np.concatenate([np.ones((X_test.shape[0], 1)),
+                             X_test], axis=1)
+
+    kernel_list = ['linear', 'poly', 'rbf']
+    c_array = np.linspace(0.1, 5, 49)
+    high_score = 0
+    best_c = None
+    best_kernel = None
+    for c in c_array:
+        for kernel in kernel_list:
+            svm_clf = svm.SVC(C=c, kernel=kernel).fit(X, y)
+            score = svm_clf.score(X_test, y_test)
+            print(f"Score for kernel {kernel} and C {c}:\n{score}\n")
+
+            if score > high_score:
+                best_c = c
+                best_kernel = kernel
+                high_score = score
+
+    print(
+        f"Best Kernel {best_kernel}  - Best C {best_c} - High score {high_score}")
+
+# A better way to determine hyperparameters using sklearn's GridSearchCV method
+
+
+def svm_grid_search():
+    X, y, X_test, y_test, X_future = construct_data()
+    c_array = np.linspace(1, 50, 50)
+    print(c_array)
+
+    param_grid = {'C': c_array, 'gamma': [
+        1, 0.1, 0.01, 0.001], 'kernel': ['rbf', 'sigmoid']}
+    grid = GridSearchCV(svm.SVC(), param_grid, refit=True, verbose=2)
+    grid.fit(X, y)
+    print(grid.best_estimator_)
+
 
 def main():
-    svm_test()
+    # svm_test()
     svm_ufc_test()
+    # svm_parameter_cross_val()
+   # svm_grid_search()
 
 
 if __name__ == "__main__":
