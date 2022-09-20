@@ -107,10 +107,10 @@ def svm_ufc_test():
     print(custom_svm.positive_support)
     print(custom_svm.negative_support)
 
-# Custom method to determine kernel and c parameters
-
 
 def svm_parameter_cross_val():
+    # Custom method to determine kernel and c parameters
+
     X, y, X_test, y_test, X_future = construct_data()
     rows, columns = X.shape
     X = np.concatenate([np.ones((rows, 1)),
@@ -139,10 +139,10 @@ def svm_parameter_cross_val():
     print(
         f"Best Kernel {best_kernel}  - Best C {best_c} - High score {high_score}")
 
-# A better way to determine hyperparameters using sklearn's GridSearchCV method
-
 
 def svm_grid_search():
+    # A better way to determine hyperparameters using sklearn's GridSearchCV method
+    # The result were: C = 5 and gamma=.01
     X, y, X_test, y_test, X_future = construct_data()
     c_array = np.linspace(1, 50, 50)
     print(c_array)
