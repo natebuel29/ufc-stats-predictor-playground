@@ -5,6 +5,7 @@ import numpy as np
 import boto3
 import json
 import mysql.connector
+from sklearn.preprocessing import StandardScaler
 
 from logistic_regression.logistic_regression_functions import *
 
@@ -83,17 +84,13 @@ def construct_data():
         password=password,
         database=database,
     )
+    standard_scalar = StandardScaler()
 
     cursor = conn.cursor()
     cursor.execute(f"SELECT * FROM past_matchups")
     fights_df = pd.DataFrame(cursor.fetchall()).loc[:, 1:]
 
-    cursor.execute(f"SELECT * FROM future_matchups WHERE date_='2022-08-13'")
-
-    future_df = pd.DataFrame(cursor.fetchall()).loc[:, 2:]
-
-    X_future = future_df.loc[:, 5:].astype(float).to_numpy()
-    X_future = standardize(X_future)
+    cursor.execute(f"SELECT * FROM future_matchups WHERE date_='2022-10-01'")
 
     # lets do a simple 80-20 train-test data split for now but implement cross validation
     # later. I would like to predict the ufc 274 card
@@ -101,13 +98,17 @@ def construct_data():
         frac=0.8, random_state=250)
     test = fights_df.drop(train.index)
 
+    X = train.loc[:, 4:].astype(float).to_numpy()
+    X = standard_scalar.fit_transform(X)
+
     X_test = test.loc[:, 4:].astype(float).to_numpy()
-    X_test = standardize(X_test)
+    X_test = standard_scalar.transform(X_test)
 
     y_test = test.loc[:, 3].astype(float).to_numpy()
     y = train.loc[:, 3].astype(float).to_numpy()
+    future_df = pd.DataFrame(cursor.fetchall()).loc[:, 2:]
 
-    X = train.loc[:, 4:].astype(float).to_numpy()
-    X = standardize(X)
+    X_future = future_df.loc[:, 5:].astype(float).to_numpy()
+    X_future = standard_scalar.transform(X_future)
 
     return X, y, X_test, y_test, X_future
